@@ -374,12 +374,50 @@ input, select { font: inherit; color: inherit; }
 .thinking-text strong { color: var(--color-text); }
 
 /* responsive */
+.bottom-nav { display: none; }
+
 @media (max-width: 768px) {
   body { grid-template-columns: 1fr; }
   .sidebar { display: none; }
-  .main { padding: var(--space-5); }
+  .main { padding: var(--space-5); margin-bottom: 64px; }
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .bucket-grid { grid-template-columns: 1fr 1fr; }
+  
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 64px;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    box-shadow: var(--shadow-lg);
+  }
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--color-text-muted);
+    flex: 1;
+    height: 100%;
+    cursor: pointer;
+  }
+  .bottom-nav-item .nav-icon {
+    font-size: 18px;
+    width: auto;
+    text-align: center;
+  }
+  .bottom-nav-item.active {
+    color: var(--color-primary);
+    font-weight: 600;
+  }
 }
 </style>
 </head>
@@ -1045,14 +1083,50 @@ input, select { font: inherit; color: inherit; }
 
 </main>
 
+<!-- MOBILE BOTTOM NAVIGATION -->
+<nav class="bottom-nav">
+  <button class="bottom-nav-item active" data-page="allocator">
+    <span class="nav-icon">📊</span>
+    <span>Allocator</span>
+  </button>
+  <button class="bottom-nav-item" data-page="macrolens">
+    <span class="nav-icon">🔍</span>
+    <span>Macro</span>
+  </button>
+  <button class="bottom-nav-item" data-page="news">
+    <span class="nav-icon">📰</span>
+    <span>News</span>
+  </button>
+  <button class="bottom-nav-item" data-page="gadgets">
+    <span class="nav-icon">💻</span>
+    <span>Gadgets</span>
+  </button>
+  <button class="bottom-nav-item" data-page="settings">
+    <span class="nav-icon">⚙️</span>
+    <span>Settings</span>
+  </button>
+</nav>
+
 <script>
 // === NAVIGATION ===
-document.querySelectorAll('.nav-item').forEach(btn => {
+function switchPage(pageId) {
+  document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(btn => {
+    if (btn.dataset.page === pageId) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const targetPage = document.getElementById('page-' + pageId);
+  if (targetPage) {
+    targetPage.classList.add('active');
+  }
+}
+
+document.querySelectorAll('.nav-item, .bottom-nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+    switchPage(btn.dataset.page);
   });
 });
 
