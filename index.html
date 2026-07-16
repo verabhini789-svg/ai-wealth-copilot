@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Wealth Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* === DESIGN TOKENS === */
+:root {
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'DM Mono', 'Fira Code', monospace;
+
+  --text-xs:   clamp(0.75rem,  0.7rem  + 0.25vw, 0.875rem);
+  --text-sm:   clamp(0.875rem, 0.8rem  + 0.35vw, 1rem);
+  --text-base: clamp(1rem,     0.95rem + 0.25vw, 1.125rem);
+  --text-lg:   clamp(1.125rem, 1rem    + 0.75vw, 1.5rem);
+  --text-xl:   clamp(1.5rem,   1.2rem  + 1.25vw, 2.25rem);
+
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem;
+  --space-4: 1rem;    --space-5: 1.25rem;--space-6: 1.5rem;
+  --space-8: 2rem;    --space-10:2.5rem; --space-12:3rem;
+  --space-16:4rem;
+
+  --radius-sm: 0.375rem; --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;  --radius-xl: 1rem; --radius-full: 9999px;
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root, [data-theme="light"] {
+  --color-bg:             #f7f6f2;
+  --color-surface:        #f9f8f5;
+  --color-surface-2:      #fbfbf9;
+  --color-surface-offset: #f3f0ec;
+  --color-divider:        #dcd9d5;
+  --color-border:         #d4d1ca;
+  --color-text:           #28251d;
+  --color-text-muted:     #7a7974;
+  --color-text-faint:     #bab9b4;
+  --color-primary:        #01696f;
+  --color-primary-hover:  #0c4e54;
+  --color-primary-highlight: #cedcd8;
+  --color-success:        #437a22;
+  --color-success-highlight: #d4dfcc;
+  --color-warning:        #964219;
+  --color-warning-highlight: #ddcfc6;
+  --color-error:          #a12c7b;
+  --color-gold:           #d19900;
+  --color-gold-highlight: #e9e0c6;
+  --color-blue:           #006494;
+  --color-blue-highlight: #c6d8e4;
+  --shadow-sm: 0 1px 2px oklch(0.2 0.01 80 / 0.06);
+  --shadow-md: 0 4px 12px oklch(0.2 0.01 80 / 0.08);
+  --shadow-lg: 0 12px 32px oklch(0.2 0.01 80 / 0.12);
+}
+
+[data-theme="dark"] {
+  --color-bg:             #0f0e0d;
+  --color-surface:        #161513;
+  --color-surface-2:      #1c1b19;
+  --color-surface-offset: #222120;
+  --color-divider:        #2a2927;
+  --color-border:         #333230;
+  --color-text:           #e8e7e4;
+  --color-text-muted:     #8a8984;
+  --color-text-faint:     #555452;
+  --color-primary:        #4f98a3;
+  --color-primary-hover:  #227f8b;
+  --color-primary-highlight: #1e3535;
+  --color-success:        #6daa45;
+  --color-success-highlight: #2a3d22;
+  --color-warning:        #bb653b;
+  --color-warning-highlight: #3d2e22;
+  --color-error:          #d163a7;
+  --color-gold:           #e8af34;
+  --color-gold-highlight: #3a3020;
+  --color-blue:           #5591c7;
+  --color-blue-highlight: #1a2f42;
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px oklch(0 0 0 / 0.4);
+  --shadow-lg: 0 12px 32px oklch(0 0 0 / 0.5);
+}
+
+/* === BASE === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body {
+  min-height: 100dvh;
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  color: var(--color-text);
+  background: var(--color-bg);
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: 56px 1fr;
+}
+img, svg { display: block; max-width: 100%; }
+button { cursor: pointer; background: none; border: none; font: inherit; color: inherit; }
+a, button, input, select { transition: color var(--transition), background var(--transition), border-color var(--transition), box-shadow var(--transition); }
+:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; border-radius: var(--radius-sm); }
+input, select { font: inherit; color: inherit; }
+
+/* === TOPBAR === */
+.topbar {
+  grid-column: 1 / -1;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 var(--space-6);
+  z-index: 100;
+}
+.topbar-brand { display: flex; align-items: center; gap: var(--space-3); }
+.topbar-brand .logo-text { font-size: var(--text-sm); font-weight: 600; letter-spacing: -0.01em; }
+.topbar-brand .logo-sub { font-size: var(--text-xs); color: var(--color-text-muted); }
+.topbar-right { display: flex; align-items: center; gap: var(--space-4); }
+.theme-btn {
+  width: 36px; height: 36px; border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-text-muted);
+  background: var(--color-surface-offset);
+}
+.theme-btn:hover { color: var(--color-text); background: var(--color-border); }
+.macro-pill {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-offset);
+  font-size: var(--text-xs); color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+.macro-dot { width: 7px; height: 7px; border-radius: var(--radius-full); }
+
+/* === SIDEBAR === */
+.sidebar {
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  padding: var(--space-4) var(--space-3);
+  display: flex; flex-direction: column; gap: var(--space-2);
+  overflow-y: auto;
+}
+.sidebar-section-label {
+  font-size: var(--text-xs); color: var(--color-text-faint);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  padding: var(--space-2) var(--space-2) var(--space-1);
+  margin-top: var(--space-2);
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm); color: var(--color-text-muted);
+  cursor: pointer; border: none;
+  width: 100%; text-align: left; background: none;
+}
+.nav-item:hover { background: var(--color-surface-offset); color: var(--color-text); }
+.nav-item.active {
+  background: var(--color-primary-highlight);
+  color: var(--color-primary);
+  font-weight: 500;
+}
+.nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* === MAIN === */
+.main {
+  overflow-y: auto;
+  padding: var(--space-8);
+  background: var(--color-bg);
+}
+.page { display: none; }
+.page.active { display: block; }
+
+/* === COMPONENTS === */
+.page-title {
+  font-size: var(--text-xl); font-weight: 700;
+  letter-spacing: -0.02em; margin-bottom: var(--space-2);
+}
+.page-sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-bottom: var(--space-8); }
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+.card-title { font-size: var(--text-sm); font-weight: 600; margin-bottom: var(--space-4); }
+.card-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-4); }
+
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-4); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+
+.kpi-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+.kpi-label { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-2); }
+.kpi-value { font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.kpi-delta { font-size: var(--text-xs); margin-top: var(--space-1); }
+.kpi-delta.up { color: var(--color-success); }
+.kpi-delta.down { color: var(--color-error); }
+.kpi-delta.neutral { color: var(--color-text-muted); }
+
+.input-label { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; margin-bottom: var(--space-2); display: block; }
+.input-field, .select-field {
+  width: 100%; padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm); color: var(--color-text);
+  outline: none; appearance: none;
+}
+.input-field:focus, .select-field:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.15); }
+.input-group { margin-bottom: var(--space-4); }
+
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm); font-weight: 500;
+  cursor: pointer; border: none;
+}
+.btn-primary { background: var(--color-primary); color: white; }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-ghost { background: var(--color-surface-offset); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.btn-ghost:hover { color: var(--color-text); background: var(--color-border); }
+.btn-full { width: 100%; justify-content: center; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs); font-weight: 500;
+}
+.badge-green { background: var(--color-success-highlight); color: var(--color-success); }
+.badge-yellow { background: var(--color-gold-highlight); color: var(--color-gold); }
+.badge-red { background: var(--color-warning-highlight); color: var(--color-warning); }
+.badge-blue { background: var(--color-blue-highlight); color: var(--color-blue); }
+.badge-teal { background: var(--color-primary-highlight); color: var(--color-primary); }
+
+.divider { height: 1px; background: var(--color-divider); margin: var(--space-6) 0; }
+
+.alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  display: flex; gap: var(--space-3); align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+.alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.alert-green { background: var(--color-success-highlight); color: var(--color-success); }
+.alert-yellow { background: var(--color-gold-highlight); color: var(--color-gold); }
+.alert-red { background: var(--color-warning-highlight); color: var(--color-warning); }
+.alert-blue { background: var(--color-blue-highlight); color: var(--color-blue); }
+
+/* allocation bar */
+.alloc-bar { height: 8px; border-radius: var(--radius-full); overflow: hidden; display: flex; gap: 2px; margin: var(--space-4) 0; }
+.alloc-segment { height: 100%; transition: width 0.6s cubic-bezier(0.16,1,0.3,1); }
+.alloc-legend { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.alloc-legend-item { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-xs); }
+.alloc-dot { width: 10px; height: 10px; border-radius: var(--radius-full); flex-shrink: 0; }
+
+/* bucket cards */
+.bucket-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-top: var(--space-4); }
+.bucket-card {
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+.bucket-icon { font-size: 24px; margin-bottom: var(--space-2); }
+.bucket-name { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.bucket-amount { font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; margin: var(--space-1) 0; }
+.bucket-pct { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* news feed */
+.news-item {
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-divider);
+  display: flex; gap: var(--space-4); align-items: flex-start;
+}
+.news-item:last-child { border-bottom: none; }
+.news-impact { width: 5px; height: 5px; border-radius: var(--radius-full); flex-shrink: 0; margin-top: 7px; }
+.news-source { font-size: var(--text-xs); color: var(--color-text-muted); }
+.news-headline { font-size: var(--text-sm); font-weight: 500; line-height: 1.4; margin-bottom: var(--space-1); }
+.news-sentiment { font-size: var(--text-xs); }
+
+/* gadget advisor */
+.gadget-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-divider);
+  gap: var(--space-4);
+}
+.gadget-row:last-child { border-bottom: none; }
+.gadget-info { flex: 1; }
+.gadget-name { font-size: var(--text-sm); font-weight: 500; }
+.gadget-cycle { font-size: var(--text-xs); color: var(--color-text-muted); }
+
+/* policy timeline */
+.policy-item { display: flex; gap: var(--space-4); padding: var(--space-3) 0; border-bottom: 1px solid var(--color-divider); }
+.policy-item:last-child { border-bottom: none; }
+.policy-date { font-size: var(--text-xs); font-family: var(--font-mono); color: var(--color-text-muted); min-width: 80px; padding-top: 2px; }
+.policy-body { flex: 1; }
+.policy-title { font-size: var(--text-sm); font-weight: 500; margin-bottom: var(--space-1); }
+.policy-desc { font-size: var(--text-xs); color: var(--color-text-muted); line-height: 1.5; }
+
+/* settings toggle */
+.setting-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--space-4) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: var(--text-sm); font-weight: 500; }
+.setting-desc { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+.toggle {
+  width: 44px; height: 24px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  position: relative; cursor: pointer;
+  transition: background var(--transition);
+  flex-shrink: 0;
+}
+.toggle.on { background: var(--color-primary); }
+.toggle-knob {
+  position: absolute; top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  background: white; border-radius: var(--radius-full);
+  transition: transform var(--transition);
+  box-shadow: 0 1px 3px oklch(0 0 0/0.3);
+}
+.toggle.on .toggle-knob { transform: translateX(20px); }
+
+/* chart wrapper */
+.chart-wrap { position: relative; height: 220px; }
+.chart-wrap-lg { position: relative; height: 300px; }
+
+/* insight box */
+.insight-box {
+  background: var(--color-surface-offset);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  font-size: var(--text-sm); color: var(--color-text-muted);
+  line-height: 1.6; margin-top: var(--space-4);
+}
+.insight-box strong { color: var(--color-text); }
+
+/* table */
+.table-wrap { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+.data-table th { padding: var(--space-3) var(--space-4); text-align: left; color: var(--color-text-muted); font-weight: 500; border-bottom: 1px solid var(--color-divider); }
+.data-table td { padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-divider); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--color-surface-offset); }
+
+/* thinking box */
+.thinking-box {
+  background: linear-gradient(135deg, var(--color-primary-highlight) 0%, var(--color-surface-offset) 100%);
+  border: 1px solid var(--color-primary-highlight);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin-top: var(--space-6);
+}
+.thinking-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-primary); margin-bottom: var(--space-3); display: flex; align-items: center; gap: var(--space-2); }
+.thinking-text { font-size: var(--text-sm); color: var(--color-text-muted); line-height: 1.7; }
+.thinking-text strong { color: var(--color-text); }
+
+/* responsive */
+@media (max-width: 768px) {
+  body { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main { padding: var(--space-5); }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .bucket-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-label="FinMind logo">
+      <rect width="28" height="28" rx="6" fill="var(--color-primary)"/>
+      <path d="M7 20V14l4-4 4 4 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="21" cy="8" r="2" fill="white"/>
+    </svg>
+    <div>
+      <div class="logo-text">AI Wealth Copilot</div>
+      <div class="logo-sub">FinMind — Intelligent Wealth Engine</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="macro-pill">
+      <div class="macro-dot" id="macro-dot" style="background: var(--color-success);"></div>
+      <span id="macro-label">Markets Favor Growth</span>
+    </div>
+    <button class="theme-btn" data-theme-toggle aria-label="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-section-label">Core</div>
+  <button class="nav-item active" data-page="allocator">
+    <span class="nav-icon">⚖️</span> Allocator
+  </button>
+  <button class="nav-item" data-page="macro">
+    <span class="nav-icon">🌐</span> Macro Lens
+  </button>
+  <button class="nav-item" data-page="news">
+    <span class="nav-icon">📰</span> News & Policy
+  </button>
+  <div class="sidebar-section-label">Advisor</div>
+  <button class="nav-item" data-page="gadget">
+    <span class="nav-icon">💻</span> Gadget Advisor
+  </button>
+  <button class="nav-item" data-page="invest">
+    <span class="nav-icon">📈</span> Stock Screener
+  </button>
+  <button class="nav-item" data-page="realestate">
+    <span class="nav-icon">🏠</span> Real Estate
+  </button>
+  <div class="sidebar-section-label">Tools</div>
+  <button class="nav-item" data-page="thinking">
+    <span class="nav-icon">🧠</span> Think Tank
+  </button>
+  <button class="nav-item" data-page="settings">
+    <span class="nav-icon">⚙️</span> Settings
+  </button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ===== PAGE: ALLOCATOR ===== -->
+<div class="page active" id="page-allocator">
+  <h1 class="page-title">Wealth Allocator</h1>
+  <p class="page-sub">Enter your details. The engine uses the "110 − Age" rule, macro signals, and your risk profile to split your capital across 4 optimised buckets.</p>
+
+  <div class="grid-2" style="gap: var(--space-6);">
+    <!-- Input Form -->
+    <div class="card">
+      <div class="card-title">Your Profile</div>
+      <div class="input-group">
+        <label class="input-label">Total Capital (₹)</label>
+        <input type="number" class="input-field" id="capital" value="100000" min="1000">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Age</label>
+        <input type="number" class="input-field" id="age" value="19" min="15" max="85">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Risk Tolerance</label>
+        <select class="select-field" id="risk">
+          <option value="aggressive">Aggressive (+15% growth)</option>
+          <option value="moderate" selected>Moderate (standard)</option>
+          <option value="conservative">Conservative (−15% growth)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Investment Horizon</label>
+        <select class="select-field" id="horizon">
+          <option value="short">Short Term (< 1 year)</option>
+          <option value="medium" selected>Medium Term (1–5 years)</option>
+          <option value="long">Long Term (5+ years)</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="runAllocator()">⚡ Calculate Allocation</button>
+    </div>
+
+    <!-- Output -->
+    <div class="card" id="alloc-output">
+      <div class="card-title">Recommended Split</div>
+      <div class="alloc-bar" id="alloc-bar">
+        <div class="alloc-segment" style="background:#4f98a3; width:60%;"></div>
+        <div class="alloc-segment" style="background:#6daa45; width:15%;"></div>
+        <div class="alloc-segment" style="background:#e8af34; width:15%;"></div>
+        <div class="alloc-segment" style="background:#d163a7; width:10%;"></div>
+      </div>
+      <div class="alloc-legend" id="alloc-legend">
+        <div class="alloc-legend-item"><div class="alloc-dot" style="background:#4f98a3;"></div><span>Equities — 60%</span></div>
+        <div class="alloc-legend-item"><div class="alloc-dot" style="background:#6daa45;"></div><span>Real Estate — 15%</span></div>
+        <div class="alloc-legend-item"><div class="alloc-dot" style="background:#e8af34;"></div><span>Safe Cash — 15%</span></div>
+        <div class="alloc-legend-item"><div class="alloc-dot" style="background:#d163a7;"></div><span>Self-Growth — 10%</span></div>
+      </div>
+      <div class="chart-wrap" style="margin-top: var(--space-4);">
+        <canvas id="allocChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bucket Cards -->
+  <div class="bucket-grid" id="bucket-grid" style="margin-top: var(--space-6);">
+    <div class="bucket-card">
+      <div class="bucket-icon">📊</div>
+      <div class="bucket-name">Equities</div>
+      <div class="bucket-amount" id="b-equity">₹60,000</div>
+      <div class="bucket-pct" id="b-equity-pct">60% · Nifty 50 Index, Mid-Cap funds</div>
+    </div>
+    <div class="bucket-card">
+      <div class="bucket-icon">🏠</div>
+      <div class="bucket-name">Real Estate (REITs)</div>
+      <div class="bucket-amount" id="b-reit">₹15,000</div>
+      <div class="bucket-pct" id="b-reit-pct">15% · Embassy REIT, Nexus REIT</div>
+    </div>
+    <div class="bucket-card">
+      <div class="bucket-icon">🏦</div>
+      <div class="bucket-name">Safe Cash</div>
+      <div class="bucket-amount" id="b-cash">₹15,000</div>
+      <div class="bucket-pct" id="b-cash-pct">15% · T-Bills, Liquid Funds</div>
+    </div>
+    <div class="bucket-card">
+      <div class="bucket-icon">🎓</div>
+      <div class="bucket-name">Self-Growth</div>
+      <div class="bucket-amount" id="b-skills">₹10,000</div>
+      <div class="bucket-pct" id="b-skills-pct">10% · Courses, Tools, Books</div>
+    </div>
+  </div>
+
+  <div class="thinking-box" id="alloc-insight" style="display:none;">
+    <div class="thinking-title">🤖 Copilot's Reasoning</div>
+    <div class="thinking-text" id="alloc-insight-text"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: MACRO LENS ===== -->
+<div class="page" id="page-macro">
+  <h1 class="page-title">Macro Lens</h1>
+  <p class="page-sub">Real-world macroeconomic signals that your allocation engine reads automatically. When rates are high, hold cash. When rates are low, push into growth.</p>
+
+  <div class="grid-4" style="margin-bottom: var(--space-6);">
+    <div class="kpi-card">
+      <div class="kpi-label">RBI Repo Rate</div>
+      <div class="kpi-value">6.50%</div>
+      <div class="kpi-delta neutral">↔ Unchanged · Jun 2026</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">India CPI Inflation</div>
+      <div class="kpi-value">4.2%</div>
+      <div class="kpi-delta up">↓ Easing from 5.1%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">US Fed Rate</div>
+      <div class="kpi-value">5.25%</div>
+      <div class="kpi-delta neutral">↔ Hold expected</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Nifty 50 P/E</div>
+      <div class="kpi-value">22.4×</div>
+      <div class="kpi-delta down">⚠ Above 20× avg</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📈 Rate Cycle Signal</div>
+      <div class="card-sub">What macro says about your cash vs. growth allocation</div>
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠️</span>
+        <div><strong>Elevated Rate Environment (6.50%)</strong><br>Cash in liquid funds or T-Bills currently earns ~7% risk-free. Holding 15–20% cash is rational. Wait for RBI to signal cuts before shifting cash into equities.</div>
+      </div>
+      <div class="alert alert-blue">
+        <span class="alert-icon">💡</span>
+        <div><strong>Inflation is easing</strong><br>CPI falling from 5.1% → 4.2% means real returns are improving. Equities become attractive again as inflation-adjusted profit margins expand.</div>
+      </div>
+      <div class="chart-wrap-lg" style="margin-top: var(--space-4);">
+        <canvas id="macroChart"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🌍 Global Macro Pulse</div>
+      <div class="card-sub">Key international signals affecting Indian markets</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Signal</th><th>Current</th><th>Impact on India</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>USD/INR</td><td>₹83.6</td><td>Weak rupee → import inflation</td><td><span class="badge badge-yellow">Watch</span></td></tr>
+            <tr><td>Crude Oil (Brent)</td><td>$79/bbl</td><td>High oil → CAD pressure</td><td><span class="badge badge-yellow">Watch</span></td></tr>
+            <tr><td>FII Flows (Jun 26)</td><td>+₹4,200 Cr</td><td>Positive sentiment</td><td><span class="badge badge-green">Bullish</span></td></tr>
+            <tr><td>US 10Y Bond</td><td>4.35%</td><td>Capital flows to US bonds</td><td><span class="badge badge-red">Caution</span></td></tr>
+            <tr><td>China PMI</td><td>50.4</td><td>Mild global demand</td><td><span class="badge badge-teal">Neutral</span></td></tr>
+            <tr><td>Gold (MCX)</td><td>₹73,400/10g</td><td>Safe-haven demand</td><td><span class="badge badge-green">Hedge</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight-box" style="margin-top: var(--space-4);">
+        <strong>Copilot Signal:</strong> Markets are in a <strong>neutral-to-cautious</strong> zone. FII inflows are positive but US rates still pull capital away. Best move: stay invested in quality large-caps and maintain 15% cash for deployment on dips.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: NEWS & POLICY ===== -->
+<div class="page" id="page-news">
+  <h1 class="page-title">News & Policy</h1>
+  <p class="page-sub">Financial news filtered for wealth impact. Past and upcoming government policies that affect your money decisions.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔴 Live News Feed</div>
+      <div class="card-sub">Headlines ranked by wealth impact (High / Medium / Low)</div>
+      <div id="news-feed">
+        <div class="news-item">
+          <div class="news-impact" style="background: var(--color-error);"></div>
+          <div>
+            <div class="news-headline">RBI holds repo rate at 6.50% — signals rate cuts by Q3 2026</div>
+            <div style="display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+              <span class="news-source">RBI · Jul 2026</span>
+              <span class="badge badge-red">High Impact</span>
+              <span class="news-sentiment" style="color: var(--color-success);">📈 Bullish for Bonds & REITs</span>
+            </div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-impact" style="background: var(--color-gold);"></div>
+          <div>
+            <div class="news-headline">Budget 2026: LTCG tax on equities raised to 12.5% — debt funds benefit</div>
+            <div style="display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+              <span class="news-source">Budget · Feb 2026</span>
+              <span class="badge badge-yellow">Medium Impact</span>
+              <span class="news-sentiment" style="color: var(--color-warning);">⚠ Shift to 3-year+ holding</span>
+            </div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-impact" style="background: var(--color-success);"></div>
+          <div>
+            <div class="news-headline">India GDP Q1 FY27 at 7.2% — IT and manufacturing lead</div>
+            <div style="display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+              <span class="news-source">MoSPI · Jun 2026</span>
+              <span class="badge badge-green">Positive</span>
+              <span class="news-sentiment" style="color: var(--color-success);">📈 Growth narrative intact</span>
+            </div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-impact" style="background: var(--color-error);"></div>
+          <div>
+            <div class="news-headline">SEBI tightens F&O margin rules — retail derivatives traders face restrictions</div>
+            <div style="display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+              <span class="news-source">SEBI · May 2026</span>
+              <span class="badge badge-red">Regulation</span>
+              <span class="news-sentiment" style="color: var(--color-text-muted);">No impact on long-term investors</span>
+            </div>
+          </div>
+        </div>
+        <div class="news-item">
+          <div class="news-impact" style="background: var(--color-primary);"></div>
+          <div>
+            <div class="news-headline">NPS Vatsalya: Parents can now open NPS accounts for minors — tax benefit available</div>
+            <div style="display:flex; gap:var(--space-2); align-items:center; flex-wrap:wrap;">
+              <span class="news-source">PFRDA · 2026</span>
+              <span class="badge badge-teal">Opportunity</span>
+              <span class="news-sentiment" style="color: var(--color-primary);">💰 Long-term compounding play</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏛️ Policy Timeline</div>
+      <div class="card-sub">Key government & RBI policies affecting investments</div>
+      <div id="policy-timeline">
+        <div class="policy-item">
+          <div class="policy-date">FEB 2026</div>
+          <div class="policy-body">
+            <div class="policy-title">Union Budget 2026–27 <span class="badge badge-yellow" style="margin-left:6px;">Tax</span></div>
+            <div class="policy-desc">LTCG tax on equity set at 12.5% (no indexation) for holding > 1 year above ₹1.25 lakh gains. STCG at 20%. New income tax slabs — ₹12L taxable income now at lower slab. Implication: <strong>hold equities beyond 1 year minimum.</strong></div>
+          </div>
+        </div>
+        <div class="policy-item">
+          <div class="policy-date">JUN 2026</div>
+          <div class="policy-body">
+            <div class="policy-title">RBI MPC Decision <span class="badge badge-teal" style="margin-left:6px;">Rate</span></div>
+            <div class="policy-desc">Rates held at 6.50%. Statement: "Withdrawal of accommodation" stance continues. First cut expected September 2026. Implication: <strong>current FD/liquid fund rates (7%+) are attractive. Maintain 15% cash allocation.</strong></div>
+          </div>
+        </div>
+        <div class="policy-item">
+          <div class="policy-date">SEP 2026</div>
+          <div class="policy-body">
+            <div class="policy-title">RBI Rate Cut (Expected) <span class="badge badge-blue" style="margin-left:6px;">Upcoming</span></div>
+            <div class="policy-desc">Analysts project 25–50 bps rate cut. Implication: <strong>deploy cash bucket into equities/REITs if cut materialises. Long-duration debt funds will benefit significantly.</strong></div>
+          </div>
+        </div>
+        <div class="policy-item">
+          <div class="policy-date">JAN 2027</div>
+          <div class="policy-body">
+            <div class="policy-title">SEBI New Asset Class <span class="badge badge-blue" style="margin-left:6px;">Upcoming</span></div>
+            <div class="policy-desc">New "Specialised Investment Fund" category launching — minimum ₹10L ticket, higher risk, uncorrelated returns. Implication: <strong>future high-value allocation option for wealth builders.</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: GADGET ADVISOR ===== -->
+<div class="page" id="page-gadget">
+  <h1 class="page-title">Gadget Advisor</h1>
+  <p class="page-sub">Gadgets are depreciating assets that follow predictable release cycles. The Copilot tells you whether to buy now or wait — so you don't waste money on day-before-launch purchases.</p>
+
+  <div class="grid-2" style="margin-bottom: var(--space-6);">
+    <div class="card">
+      <div class="card-title">Check a Purchase</div>
+      <div class="input-group">
+        <label class="input-label">What are you planning to buy?</label>
+        <select class="select-field" id="gadget-select">
+          <option value="">Select a gadget category...</option>
+          <option value="laptop">Laptop / Ultrabook</option>
+          <option value="gpu">Graphics Card (GPU)</option>
+          <option value="cpu">CPU / Processor</option>
+          <option value="ram">RAM / Memory</option>
+          <option value="phone">Smartphone</option>
+          <option value="iphone">iPhone</option>
+          <option value="tablet">Tablet / iPad</option>
+          <option value="ssd">SSD / Storage</option>
+          <option value="monitor">Monitor</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Budget (₹)</label>
+        <input type="number" class="input-field" id="gadget-budget" value="60000" placeholder="60000">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="checkGadget()">🔍 Analyse Purchase Timing</button>
+    </div>
+    <div class="card" id="gadget-result">
+      <div class="card-title">Purchase Analysis</div>
+      <div style="color: var(--color-text-muted); font-size: var(--text-sm); padding: var(--space-8) 0; text-align: center;">
+        Select a gadget and click Analyse to see the timing recommendation
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📅 Tech Release Calendar 2026–27</div>
+    <div class="card-sub">Predicted launch windows — delay purchases if < 60 days to next cycle</div>
+    <div id="gadget-table">
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">iPhone 17 Series</div><div class="gadget-cycle">Annual cycle · Sep 2026 expected</div></div>
+        <div><span class="badge badge-red">⏳ 60 days away — WAIT</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">NVIDIA RTX 5070 / 5080 Ti</div><div class="gadget-cycle">Next-gen Ada successor · Q4 2026</div></div>
+        <div><span class="badge badge-yellow">⚠ 3–4 months — Consider waiting</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">Intel Arrow Lake-S Refresh</div><div class="gadget-cycle">CPU refresh cycle · Q3 2026</div></div>
+        <div><span class="badge badge-yellow">⚠ Launch imminent — WAIT</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">DDR5 RAM (Gen 2 pricing)</div><div class="gadget-cycle">Prices dropping 20–30% by Oct 2026</div></div>
+        <div><span class="badge badge-yellow">⚠ Wait 3 months for 25% savings</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">Samsung Galaxy S26</div><div class="gadget-cycle">Annual cycle · Jan 2027 expected</div></div>
+        <div><span class="badge badge-green">✅ S25 good buy now — 6 months</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">OLED Monitor (27–32")</div><div class="gadget-cycle">Mature market — prices stable</div></div>
+        <div><span class="badge badge-green">✅ Good time to buy</span></div>
+      </div>
+      <div class="gadget-row">
+        <div class="gadget-info"><div class="gadget-name">MacBook Pro M5</div><div class="gadget-cycle">M5 chip · Oct 2026 likely</div></div>
+        <div><span class="badge badge-red">⏳ 90 days — WAIT for M5</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: STOCK SCREENER ===== -->
+<div class="page" id="page-invest">
+  <h1 class="page-title">Stock Screener</h1>
+  <p class="page-sub">Fundamental stock screener. Enter your sector of interest or amount — the Copilot surfaces ideas aligned with the current macro cycle.</p>
+
+  <div class="grid-2" style="margin-bottom: var(--space-6);">
+    <div class="card">
+      <div class="card-title">Filter Stocks</div>
+      <div class="input-group">
+        <label class="input-label">Investment Amount (₹)</label>
+        <input type="number" class="input-field" id="stock-amt" value="50000">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Sector</label>
+        <select class="select-field" id="sector">
+          <option value="all">All Sectors</option>
+          <option value="it">IT / Technology</option>
+          <option value="banking">Banking & Finance</option>
+          <option value="infra">Infrastructure</option>
+          <option value="fmcg">FMCG / Consumer</option>
+          <option value="pharma">Pharma / Healthcare</option>
+          <option value="energy">Energy / Green</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Style</label>
+        <select class="select-field" id="style">
+          <option value="value">Value (Low P/E)</option>
+          <option value="growth" selected>Growth (High ROE)</option>
+          <option value="dividend">Dividend (High Yield)</option>
+          <option value="momentum">Momentum</option>
+        </select>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="screenStocks()">🔍 Find Opportunities</button>
+    </div>
+    <div class="card" id="stock-macro-signal">
+      <div class="card-title">Current Macro Favourites</div>
+      <div class="alert alert-green">
+        <span class="alert-icon">✅</span>
+        <div><strong>Favoured sectors in current cycle:</strong><br>IT (rupee depreciation tailwind), Infra (capex push), Pharma (defensive hedge)</div>
+      </div>
+      <div class="alert alert-yellow">
+        <span class="alert-icon">⚠️</span>
+        <div><strong>Sectors to underweight:</strong><br>Real estate stocks (high rates), Small-caps overvalued (elevated P/E)</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="sectorChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="stock-results">
+    <div class="card-title">Screener Results</div>
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>Stock</th><th>Sector</th><th>P/E</th><th>ROE</th><th>Div Yield</th><th>52W</th><th>Signal</th></tr>
+        </thead>
+        <tbody id="stock-table">
+          <tr><td>Infosys</td><td>IT</td><td>22.4</td><td>32%</td><td>2.8%</td><td>📈 +18%</td><td><span class="badge badge-green">BUY</span></td></tr>
+          <tr><td>HDFC Bank</td><td>Banking</td><td>18.2</td><td>17%</td><td>1.2%</td><td>📈 +12%</td><td><span class="badge badge-green">BUY</span></td></tr>
+          <tr><td>L&T</td><td>Infra</td><td>30.1</td><td>14%</td><td>0.9%</td><td>📈 +28%</td><td><span class="badge badge-teal">HOLD</span></td></tr>
+          <tr><td>Sun Pharma</td><td>Pharma</td><td>32.5</td><td>19%</td><td>0.7%</td><td>📈 +22%</td><td><span class="badge badge-green">BUY</span></td></tr>
+          <tr><td>Adani Ports</td><td>Infra</td><td>28.6</td><td>15%</td><td>0.5%</td><td>📈 +35%</td><td><span class="badge badge-yellow">WAIT</span></td></tr>
+          <tr><td>ITC</td><td>FMCG</td><td>27.0</td><td>28%</td><td>3.4%</td><td>📉 −4%</td><td><span class="badge badge-green">DIVIDEND BUY</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: REAL ESTATE ===== -->
+<div class="page" id="page-realestate">
+  <h1 class="page-title">Real Estate</h1>
+  <p class="page-sub">REITs (Real Estate Investment Trusts) let you invest in real estate with as little as ₹300. The Copilot helps you decide between physical property and REITs based on your capital and macro cycle.</p>
+
+  <div class="grid-2" style="margin-bottom: var(--space-6);">
+    <div class="card">
+      <div class="card-title">🏢 Indian REIT Tracker</div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>REIT</th><th>Type</th><th>Yield</th><th>1Y Return</th><th>Min Buy</th><th>Signal</th></tr></thead>
+          <tbody>
+            <tr><td>Embassy REIT</td><td>Office</td><td>6.2%</td><td>+14%</td><td>₹330</td><td><span class="badge badge-green">BUY</span></td></tr>
+            <tr><td>Mindspace REIT</td><td>Office</td><td>6.8%</td><td>+11%</td><td>₹320</td><td><span class="badge badge-green">BUY</span></td></tr>
+            <tr><td>Nexus REIT</td><td>Retail</td><td>5.1%</td><td>+19%</td><td>₹295</td><td><span class="badge badge-teal">HOLD</span></td></tr>
+            <tr><td>Brookfield REIT</td><td>Office</td><td>7.1%</td><td>+8%</td><td>₹280</td><td><span class="badge badge-green">HIGH YIELD</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="insight-box">
+        <strong>Why REITs now:</strong> With rate cuts expected in Sep 2026, REIT prices will re-rate upward (similar to bond behaviour). Buy at current elevated rates for dual benefit: high distribution yield + capital appreciation when rates fall.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🏘️ Physical Property vs REIT</div>
+      <table class="data-table" style="margin-top: var(--space-2);">
+        <thead><tr><th>Factor</th><th>Physical Property</th><th>REIT</th></tr></thead>
+        <tbody>
+          <tr><td>Min Capital</td><td>₹20–50 Lakh</td><td>₹300</td></tr>
+          <tr><td>Liquidity</td><td>❌ Months to sell</td><td>✅ T+2 days</td></tr>
+          <tr><td>Diversification</td><td>❌ Single asset</td><td>✅ 20+ properties</td></tr>
+          <tr><td>Rental Yield</td><td>2–3%</td><td>5–7%</td></tr>
+          <tr><td>Maintenance</td><td>❌ Your problem</td><td>✅ Managed</td></tr>
+          <tr><td>Tax (LTCG)</td><td>20% + indexation</td><td>12.5% (same as equity)</td></tr>
+          <tr><td>Leverage</td><td>✅ Home loan possible</td><td>❌ None</td></tr>
+        </tbody>
+      </table>
+      <div class="alert alert-blue" style="margin-top: var(--space-4);">
+        <span class="alert-icon">🎯</span>
+        <div><strong>Copilot Verdict for 19-year-old builder:</strong> Start with REITs. You get real estate exposure, high liquidity, and can redeploy capital fast. Physical property makes sense only after you have ₹50L+ and need a stable long-term asset.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: THINK TANK ===== -->
+<div class="page" id="page-thinking">
+  <h1 class="page-title">Think Tank</h1>
+  <p class="page-sub">The quality of output depends on the quality of input. This module helps you think in frameworks — not just "what to buy" but "how to think about buying." Long-term wealth is built on mental models.</p>
+
+  <div class="grid-2" style="margin-bottom: var(--space-6);">
+    <div class="card">
+      <div class="card-title">🧠 Mental Models for Wealth</div>
+      <div class="policy-item">
+        <div class="policy-date" style="color: var(--color-primary);">COMPOUNDING</div>
+        <div class="policy-body">
+          <div class="policy-title">The 8th Wonder — Time × Rate</div>
+          <div class="policy-desc">₹10,000 at 15% CAGR = ₹4.04 Lakh in 25 years. The rule: <strong>never interrupt compounding unnecessarily.</strong> Each withdrawal resets the clock. Your biggest wealth weapon at 19 is time — not stock picks.</div>
+        </div>
+      </div>
+      <div class="policy-item">
+        <div class="policy-date" style="color: var(--color-gold);">OPPORTUNITY COST</div>
+        <div class="policy-body">
+          <div class="policy-title">Every rupee has an alternative</div>
+          <div class="policy-desc">Spending ₹60,000 on a gaming PC isn't ₹60K — it's ₹24.4 Lakh in 25 years at 15% CAGR. That doesn't mean never buy — it means <strong>be conscious of what you're trading.</strong></div>
+        </div>
+      </div>
+      <div class="policy-item">
+        <div class="policy-date" style="color: var(--color-success);">ASYMMETRY</div>
+        <div class="policy-body">
+          <div class="policy-title">Seek asymmetric bets</div>
+          <div class="policy-desc">Look for situations where <strong>downside is capped but upside is unlimited.</strong> A ₹5,000 course that makes you 10x more productive is asymmetric. A fixed deposit at 7% is not. Most retail investors miss this entirely.</div>
+        </div>
+      </div>
+      <div class="policy-item">
+        <div class="policy-date" style="color: var(--color-blue);">SECOND ORDER</div>
+        <div class="policy-body">
+          <div class="policy-title">Think beyond the obvious</div>
+          <div class="policy-desc">First-order: "RBI cuts rates → buy bonds." Second-order: "Rate cut means economy expanding → buy cyclicals." Third-order: "Expansion means more demand for power → buy infra." <strong>Most people stop at first order.</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔮 Scenario Simulator</div>
+      <div class="card-sub">Project your wealth under different scenarios</div>
+      <div class="input-group">
+        <label class="input-label">Starting Capital (₹)</label>
+        <input type="number" class="input-field" id="sim-capital" value="100000">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Monthly SIP Addition (₹)</label>
+        <input type="number" class="input-field" id="sim-monthly" value="5000">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Expected Annual Return (%)</label>
+        <input type="number" class="input-field" id="sim-rate" value="15" step="0.5">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Years</label>
+        <input type="number" class="input-field" id="sim-years" value="25" min="1" max="50">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="runSimulator()">📊 Run Projection</button>
+      <div id="sim-result" style="display:none; margin-top: var(--space-4);">
+        <div class="grid-2" style="gap: var(--space-3); margin-bottom: var(--space-4);">
+          <div class="kpi-card"><div class="kpi-label">Final Corpus</div><div class="kpi-value" id="sim-corpus">—</div></div>
+          <div class="kpi-card"><div class="kpi-label">Total Invested</div><div class="kpi-value" id="sim-invested">—</div></div>
+        </div>
+        <div class="chart-wrap-lg"><canvas id="simChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SETTINGS ===== -->
+<div class="page" id="page-settings">
+  <h1 class="page-title">Settings</h1>
+  <p class="page-sub">Personalise the Copilot. Enable or disable modules. The AI quality improves when your context inputs are accurate.</p>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🧩 Active Modules</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Macro News Feed</div><div class="setting-desc">Live financial news with wealth-impact tagging</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Gadget Buy/Wait Advisor</div><div class="setting-desc">Tech release cycle tracking to avoid bad timing</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Policy Impact Alerts</div><div class="setting-desc">RBI, SEBI, Budget notifications ranked by impact</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">REIT Tracker</div><div class="setting-desc">Real estate investment trust monitoring</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Think Tank Prompts</div><div class="setting-desc">Mental model framework suggestions</div></div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Startup Allocation</div><div class="setting-desc">Angel investing / startup tracking (coming soon)</div></div>
+        <div class="toggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ Profile Context</div>
+      <div class="card-sub">Better context = better advice. This data never leaves your device.</div>
+      <div class="input-group">
+        <label class="input-label">Your Name</label>
+        <input type="text" class="input-field" placeholder="Abhinav" value="Abhinav" id="settings-name">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Monthly Income (₹)</label>
+        <input type="number" class="input-field" placeholder="25000" id="settings-income">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Monthly Expenses (₹)</label>
+        <input type="number" class="input-field" placeholder="12000" id="settings-expenses">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Primary Goal</label>
+        <select class="select-field" id="settings-goal">
+          <option>Wealth Creation (Long-term)</option>
+          <option>Emergency Fund</option>
+          <option>Buy Property</option>
+          <option>Financial Independence</option>
+          <option>Build a Startup</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Currency</label>
+        <select class="select-field" id="settings-currency">
+          <option>₹ Indian Rupee (INR)</option>
+          <option>$ US Dollar (USD)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label class="input-label">Gemini API Key</label>
+        <input type="password" class="input-field" placeholder="Paste Gemini Key (optional)" id="settings-api-key">
+      </div>
+      <button class="btn btn-primary btn-full" id="save-context-btn" onclick="saveSettings()">💾 Save Context</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// === NAVIGATION ===
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('page-' + btn.dataset.page).classList.add('active');
+  });
+});
+
+// === THEME TOGGLE ===
+(function(){
+  const btn = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let theme = 'dark';
+  btn && btn.addEventListener('click', () => {
+    theme = theme === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', theme);
+    btn.innerHTML = theme === 'dark'
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+    updateChartThemes();
+  });
+})();
+
+// === CHART HELPERS ===
+function getCSS(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+let charts = {};
+
+function initCharts() {
+  // Allocation Donut
+  const actx = document.getElementById('allocChart').getContext('2d');
+  charts.alloc = new Chart(actx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Equities','REITs','Safe Cash','Self-Growth'],
+      datasets: [{ data: [60,15,15,10], backgroundColor: ['#4f98a3','#6daa45','#e8af34','#d163a7'], borderWidth: 0 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, cutout:'72%', plugins: { legend: { display:false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` }}}}
+  });
+
+  // Macro Chart
+  const mctx = document.getElementById('macroChart').getContext('2d');
+  const labels = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  charts.macro = new Chart(mctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Repo Rate %', data: [6.75,6.75,6.5,6.5,6.5,6.5,6.5,6.5,6.25,6.25,6.0,6.0], borderColor: '#4f98a3', backgroundColor: 'transparent', tension:0.4, pointRadius:3 },
+        { label: 'CPI Inflation %', data: [5.1,4.9,4.7,4.5,4.3,4.2,4.1,4.0,3.9,3.8,3.8,3.7], borderColor: '#e8af34', backgroundColor: 'transparent', tension:0.4, pointRadius:3, borderDash:[4,3] }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { labels: { color: getCSS('--color-text-muted'), font:{ size:11 } }}},
+      scales: {
+        x: { ticks: { color: getCSS('--color-text-muted'), font:{size:10} }, grid: { color: getCSS('--color-divider') }},
+        y: { ticks: { color: getCSS('--color-text-muted'), font:{size:10}, callback: v => v+'%' }, grid: { color: getCSS('--color-divider') }}
+      }
+    }
+  });
+
+  // Sector Chart
+  const sctx = document.getElementById('sectorChart').getContext('2d');
+  charts.sector = new Chart(sctx, {
+    type: 'bar',
+    data: {
+      labels: ['IT','Banking','Infra','FMCG','Pharma','Energy'],
+      datasets: [{ label: 'Macro Score', data: [85,70,80,60,75,65], backgroundColor: ['#4f98a3','#6daa45','#e8af34','#d163a7','#5591c7','#bb653b'], borderWidth:0, borderRadius:4 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { display:false }},
+      scales: {
+        x: { ticks: { color: getCSS('--color-text-muted'), font:{size:10} }, grid: { display:false }},
+        y: { ticks: { color: getCSS('--color-text-muted'), font:{size:10} }, grid: { color: getCSS('--color-divider') }, max:100 }
+      }
+    }
+  });
+}
+
+function updateChartThemes() {
+  Object.values(charts).forEach(c => {
+    if (c.options.scales) {
+      ['x','y'].forEach(ax => {
+        if (c.options.scales[ax]) {
+          c.options.scales[ax].ticks.color = getCSS('--color-text-muted');
+          if (c.options.scales[ax].grid) c.options.scales[ax].grid.color = getCSS('--color-divider');
+        }
+      });
+    }
+    if (c.options.plugins?.legend?.labels) c.options.plugins.legend.labels.color = getCSS('--color-text-muted');
+    c.update();
+  });
+}
+
+// === SETTINGS MANAGEMENT ===
+window.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('settings-name').value = localStorage.getItem('copilot_name') || 'Abhinav';
+  document.getElementById('settings-income').value = localStorage.getItem('copilot_income') || '';
+  document.getElementById('settings-expenses').value = localStorage.getItem('copilot_expenses') || '';
+  document.getElementById('settings-goal').value = localStorage.getItem('copilot_goal') || 'Wealth Creation (Long-term)';
+  document.getElementById('settings-currency').value = localStorage.getItem('copilot_currency') || '₹ Indian Rupee (INR)';
+  document.getElementById('settings-api-key').value = localStorage.getItem('gemini_api_key') || '';
+});
+
+function saveSettings() {
+  localStorage.setItem('copilot_name', document.getElementById('settings-name').value);
+  localStorage.setItem('copilot_income', document.getElementById('settings-income').value);
+  localStorage.setItem('copilot_expenses', document.getElementById('settings-expenses').value);
+  localStorage.setItem('copilot_goal', document.getElementById('settings-goal').value);
+  localStorage.setItem('copilot_currency', document.getElementById('settings-currency').value);
+  localStorage.setItem('gemini_api_key', document.getElementById('settings-api-key').value);
+  alert('Settings saved successfully!');
+}
+
+// === ALLOCATOR & ADVISOR BACKEND SYNC ===
+function syncAppWithBackend() {
+  const capital = parseFloat(document.getElementById('capital').value) || 100000;
+  const age = parseInt(document.getElementById('age').value) || 25;
+  const risk = document.getElementById('risk').value;
+  
+  // Gadget inputs
+  const gadget_category = document.getElementById('gadget-select').value;
+  const gadget_budget = parseFloat(document.getElementById('gadget-budget').value) || 50000;
+  
+  // Settings API Key
+  const api_key = localStorage.getItem('gemini_api_key') || '';
+  
+  // Show loading state in Copilot Reasoning
+  const insightBox = document.getElementById('alloc-insight');
+  insightBox.style.display = 'block';
+  document.getElementById('alloc-insight-text').innerHTML = '🤖 <em>Copilot is thinking... calling backend models...</em>';
+  
+  // Update gadget result card to show loading state if a gadget is selected
+  if (gadget_category) {
+    document.getElementById('gadget-result').innerHTML = `
+      <div class="card-title">Analysis: Evaluating...</div>
+      <div style="font-size: var(--text-sm); color: var(--color-text-muted); padding: var(--space-4) 0;">
+        🤖 <em>Checking release cycle & opportunity cost...</em>
+      </div>
+    `;
+  }
+  
+  // Fetch from our local Flask server
+  fetch('/api/allocate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      age: age,
+      risk_tolerance: risk,
+      total_capital: capital,
+      gadget_category: gadget_category,
+      gadget_budget: gadget_budget,
+      api_key: api_key
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    // 1. Update Allocation percentages and chart
+    const alloc = data.allocation;
+    const equities = Math.round(alloc.percentages["Equities (Stocks)"]);
+    const reit = Math.round(alloc.percentages["Real Estate (REITs)"]);
+    const cash = Math.round(alloc.percentages["Safe Cash"]);
+    const skills = Math.round(alloc.percentages["Self-Growth (Education)"]);
+    
+    // Update bar
+    document.getElementById('alloc-bar').innerHTML = `
+      <div class="alloc-segment" style="background:#4f98a3; width:${equities}%;"></div>
+      <div class="alloc-segment" style="background:#6daa45; width:${reit}%;"></div>
+      <div class="alloc-segment" style="background:#e8af34; width:${cash}%;"></div>
+      <div class="alloc-segment" style="background:#d163a7; width:${skills}%;"></div>
+    `;
+    
+    // Update legend
+    document.getElementById('alloc-legend').innerHTML = `
+      <div class="alloc-legend-item"><div class="alloc-dot" style="background:#4f98a3;"></div><span>Equities — ${equities}%</span></div>
+      <div class="alloc-legend-item"><div class="alloc-dot" style="background:#6daa45;"></div><span>Real Estate — ${reit}%</span></div>
+      <div class="alloc-legend-item"><div class="alloc-dot" style="background:#e8af34;"></div><span>Safe Cash — ${cash}%</span></div>
+      <div class="alloc-legend-item"><div class="alloc-dot" style="background:#d163a7;"></div><span>Self-Growth — ${skills}%</span></div>
+    `;
+    
+    // Update donut chart
+    charts.alloc.data.datasets[0].data = [equities, reit, cash, skills];
+    charts.alloc.update();
+    
+    // 2. Update Bucket Cards
+    const fmt = v => '₹' + Math.round(v).toLocaleString('en-IN');
+    document.getElementById('b-equity').textContent = fmt(alloc.dollars["Equities (Stocks)"]);
+    document.getElementById('b-equity-pct').textContent = `${equities}% · Nifty 50, Mid-Cap Index Funds`;
+    document.getElementById('b-reit').textContent = fmt(alloc.dollars["Real Estate (REITs)"]);
+    document.getElementById('b-reit-pct').textContent = `${reit}% · Embassy REIT, Mindspace REIT`;
+    document.getElementById('b-cash').textContent = fmt(alloc.dollars["Safe Cash"]);
+    document.getElementById('b-cash-pct').textContent = `${cash}% · Liquid Funds, T-Bills (7% risk-free)`;
+    document.getElementById('b-skills').textContent = fmt(alloc.dollars["Self-Growth (Education)"]);
+    document.getElementById('b-skills-pct').textContent = `${skills}% · Courses, Tools, Books — highest ROI`;
+    
+    // 3. Update Copilot Reasoning
+    const ai = data.ai_advice;
+    let skillsListHTML = '<ul style="margin-left: var(--space-4); margin-top: var(--space-2); list-style-type: disc;">';
+    if (ai.skills && ai.skills.length > 0) {
+      ai.skills.forEach(s => {
+        skillsListHTML += `<li style="margin-bottom:var(--space-2)"><strong>${s.name}</strong> (${s.cost}): ${s.why}</li>`;
+      });
+    } else {
+      skillsListHTML += "<li>No specific skills returned.</li>";
+    }
+    skillsListHTML += "</ul>";
+    
+    document.getElementById('alloc-insight-text').innerHTML = `
+      ${ai.reasoning}
+      <br><br>
+      🎯 <strong>Recommended High-ROI Skills to Acquire (Self-Growth Budget):</strong>
+      ${skillsListHTML}
+      <br>
+      🧠 <strong>Discipline Rule:</strong> ${ai.discipline_rule}
+    `;
+    
+    // 4. Update Gadget Advisor Card (if a gadget was analysed)
+    if (gadget_category && data.gadget_info) {
+      const g = data.gadget_info;
+      document.getElementById('gadget-result').innerHTML = `
+        <div class="card-title">Analysis: ${g.name}</div>
+        <div style="font-size: 2rem; font-weight: 800; color: ${g.color}; margin: var(--space-3) 0;">${g.verdict}</div>
+        <div style="font-size: var(--text-sm); line-height: 1.7; color: var(--color-text-muted); margin-bottom: var(--space-4);">${g.reason}</div>
+        <div class="kpi-card">
+          <div class="kpi-label">Potential Savings</div>
+          <div class="kpi-value" style="font-size: var(--text-sm);">${g.savings}</div>
+        </div>
+        <div class="insight-box" style="margin-top: var(--space-4);">
+          ${g.opportunity_cost}
+        </div>
+      `;
+    }
+  })
+  .catch(err => {
+    console.error("API Error:", err);
+    document.getElementById('alloc-insight-text').innerHTML = '❌ <em>Error contacting local backend server. Make sure server.py is running.</em>';
+  });
+}
+
+function runAllocator() {
+  syncAppWithBackend();
+}
+
+function checkGadget() {
+  syncAppWithBackend();
+}
+
+// === STOCK SCREENER ===
+function screenStocks() {
+  const amt = parseFloat(document.getElementById('stock-amt').value) || 50000;
+  const sector = document.getElementById('sector').value;
+  const style = document.getElementById('style').value;
+
+  const allStocks = [
+    { name:'Infosys', sector:'it', pe:22.4, roe:32, div:2.8, yr:18, signal:'BUY', cls:'badge-green' },
+    { name:'TCS', sector:'it', pe:28.1, roe:44, div:1.2, yr:15, signal:'HOLD', cls:'badge-teal' },
+    { name:'HDFC Bank', sector:'banking', pe:18.2, roe:17, div:1.2, yr:12, signal:'BUY', cls:'badge-green' },
+    { name:'ICICI Bank', sector:'banking', pe:17.5, roe:18, div:0.9, yr:22, signal:'BUY', cls:'badge-green' },
+    { name:'L&T', sector:'infra', pe:30.1, roe:14, div:0.9, yr:28, signal:'HOLD', cls:'badge-teal' },
+    { name:'Adani Ports', sector:'infra', pe:28.6, roe:15, div:0.5, yr:35, signal:'WAIT', cls:'badge-yellow' },
+    { name:'ITC', sector:'fmcg', pe:27.0, roe:28, div:3.4, yr:-4, signal:'DIV BUY', cls:'badge-green' },
+    { name:'HUL', sector:'fmcg', pe:52.3, roe:22, div:1.7, yr:-8, signal:'WAIT', cls:'badge-yellow' },
+    { name:'Sun Pharma', sector:'pharma', pe:32.5, roe:19, div:0.7, yr:22, signal:'BUY', cls:'badge-green' },
+    { name:'Cipla', sector:'pharma', pe:27.1, roe:16, div:0.5, yr:18, signal:'BUY', cls:'badge-green' },
+    { name:'NTPC Green', sector:'energy', pe:35.0, roe:12, div:0.3, yr:42, signal:'BUY', cls:'badge-green' },
+    { name:'Tata Power', sector:'energy', pe:38.2, roe:11, div:0.4, yr:31, signal:'HOLD', cls:'badge-teal' },
+  ];
+
+  let filtered = allStocks;
+  if (sector !== 'all') filtered = filtered.filter(s => s.sector === sector);
+  if (style === 'value') filtered.sort((a,b) => a.pe - b.pe);
+  if (style === 'growth') filtered.sort((a,b) => b.roe - a.roe);
+  if (style === 'dividend') filtered.sort((a,b) => b.div - a.div);
+  if (style === 'momentum') filtered.sort((a,b) => b.yr - a.yr);
+
+  const tbody = document.getElementById('stock-table');
+  tbody.innerHTML = filtered.map(s => `
+    <tr>
+      <td><strong>${s.name}</strong></td>
+      <td style="color:var(--color-text-muted)">${s.sector.toUpperCase()}</td>
+      <td>${s.pe}×</td>
+      <td>${s.roe}%</td>
+      <td>${s.div}%</td>
+      <td style="color:${s.yr >= 0 ? 'var(--color-success)' : 'var(--color-error)'}">${s.yr >= 0 ? '📈 +' : '📉 '}${s.yr}%</td>
+      <td><span class="badge ${s.cls}">${s.signal}</span></td>
+    </tr>
+  `).join('');
+}
+
+// === SCENARIO SIMULATOR ===
+let simChart = null;
+function runSimulator() {
+  const capital = parseFloat(document.getElementById('sim-capital').value) || 100000;
+  const monthly = parseFloat(document.getElementById('sim-monthly').value) || 5000;
+  const rate = parseFloat(document.getElementById('sim-rate').value) / 100 || 0.15;
+  const years = parseInt(document.getElementById('sim-years').value) || 25;
+
+  const labels = [], corpus = [], invested = [];
+  let c = capital, inv = capital;
+  for (let y = 0; y <= years; y++) {
+    labels.push('Y' + y);
+    corpus.push(Math.round(c));
+    invested.push(Math.round(inv));
+    const sip = monthly * 12 * Math.pow(1 + rate, 1);
+    c = c * (1 + rate) + sip;
+    inv = inv + monthly * 12;
+  }
+
+  document.getElementById('sim-result').style.display = 'block';
+  document.getElementById('sim-corpus').textContent = '₹' + Math.round(c/100000).toLocaleString('en-IN') + 'L';
+  document.getElementById('sim-invested').textContent = '₹' + Math.round(inv/100000).toLocaleString('en-IN') + 'L';
+
+  const sctx = document.getElementById('simChart').getContext('2d');
+  if (simChart) simChart.destroy();
+  simChart = new Chart(sctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Corpus Value', data: corpus, borderColor: '#4f98a3', backgroundColor: 'rgba(79,152,163,0.1)', fill:true, tension:0.4, pointRadius:0 },
+        { label: 'Amount Invested', data: invested, borderColor: '#e8af34', backgroundColor: 'transparent', tension:0.4, pointRadius:0, borderDash:[4,3] }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend: { labels: { color: getCSS('--color-text-muted'), font:{size:11} }}},
+      scales: {
+        x: { ticks: { color: getCSS('--color-text-muted'), font:{size:10}, maxTicksLimit:10 }, grid: { color: getCSS('--color-divider') }},
+        y: { ticks: { color: getCSS('--color-text-muted'), font:{size:10}, callback: v => '₹' + (v/100000).toFixed(0) + 'L' }, grid: { color: getCSS('--color-divider') }}
+      }
+    }
+  });
+}
+
+// Init
+initCharts();
+runAllocator();
+</script>
+</body>
+</html>
