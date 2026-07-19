@@ -278,6 +278,7 @@ input, select { font: inherit; color: inherit; }
 .bucket-name { font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 .bucket-amount { font-size: var(--text-lg); font-weight: 700; font-variant-numeric: tabular-nums; margin: var(--space-1) 0; }
 .bucket-pct { font-size: var(--text-xs); color: var(--color-text-muted); }
+.bucket-how { font-size: var(--text-xs); color: var(--color-primary); margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px dashed var(--color-divider); font-weight: 500; line-height: 1.4; }
 
 /* news feed */
 .news-item {
@@ -548,24 +549,28 @@ input, select { font: inherit; color: inherit; }
       <div class="bucket-name">Equities</div>
       <div class="bucket-amount" id="b-equity">₹60,000</div>
       <div class="bucket-pct" id="b-equity-pct">60% · Nifty 50 Index, Mid-Cap funds</div>
+      <div class="bucket-how" id="b-equity-how"><strong>How:</strong> Buy Nifty 50 Index Mutual Funds via Coin/Groww (Direct, Growth).</div>
     </div>
     <div class="bucket-card">
       <div class="bucket-icon">🏠</div>
       <div class="bucket-name">Real Estate (REITs)</div>
       <div class="bucket-amount" id="b-reit">₹15,000</div>
       <div class="bucket-pct" id="b-reit-pct">15% · Embassy REIT, Nexus REIT</div>
+      <div class="bucket-how" id="b-reit-how"><strong>How:</strong> Buy listed REITs units (Embassy/Mindspace) on stock broker apps for ~₹350/unit.</div>
     </div>
     <div class="bucket-card">
       <div class="bucket-icon">🏦</div>
       <div class="bucket-name">Safe Cash</div>
       <div class="bucket-amount" id="b-cash">₹15,000</div>
       <div class="bucket-pct" id="b-cash-pct">15% · T-Bills, Liquid Funds</div>
+      <div class="bucket-how" id="b-cash-how"><strong>How:</strong> Park in high-yield savings accounts or direct Liquid Mutual Funds.</div>
     </div>
     <div class="bucket-card">
       <div class="bucket-icon">🎓</div>
       <div class="bucket-name">Self-Growth</div>
       <div class="bucket-amount" id="b-skills">₹10,000</div>
       <div class="bucket-pct" id="b-skills-pct">10% · Courses, Tools, Books</div>
+      <div class="bucket-how" id="b-skills-how"><strong>How:</strong> Invest in books, courses, or tools to grow personal earnings.</div>
     </div>
   </div>
 
@@ -1284,6 +1289,37 @@ function syncAppWithBackend() {
     document.getElementById('b-cash-pct').textContent = `${cash}% · Liquid Funds, T-Bills (7% risk-free)`;
     document.getElementById('b-skills').textContent = fmt(alloc.dollars["Self-Growth (Education)"]);
     document.getElementById('b-skills-pct').textContent = `${skills}% · Courses, Tools, Books — highest ROI`;
+
+    // Dynamic "How to Invest" guides
+    const eqVal = alloc.dollars["Equities (Stocks)"];
+    let eqHow = "Invest in a Nifty 50 Index Fund or buy blue-chip shares via Zerodha/Groww.";
+    if (eqVal < 1000) {
+      eqHow = "Start a monthly SIP in a Nifty 50 Index Mutual Fund (minimum starts at ₹100-500 on Groww).";
+    }
+    document.getElementById('b-equity-how').innerHTML = `<strong>How:</strong> ${eqHow}`;
+    
+    const reitVal = alloc.dollars["Real Estate (REITs)"];
+    let reitHow = "Buy REIT units (Embassy/Mindspace) on broker apps. Minimum is just 1 unit (~₹350).";
+    if (reitVal < 10000) {
+      reitHow = `Buy ${Math.max(1, Math.floor(reitVal / 350))} units of Embassy REIT (~₹350/unit) on Zerodha/Groww. REITs trade like shares!`;
+    } else if (reitVal >= 100000) {
+      reitHow = "Diversify across Embassy, Mindspace, and Brookfield REITs, or check high-yield fractional commercial property platforms.";
+    }
+    document.getElementById('b-reit-how').innerHTML = `<strong>How:</strong> ${reitHow}`;
+    
+    const cashVal = alloc.dollars["Safe Cash"];
+    let cashHow = "Park in low-risk Liquid Mutual Funds or buy Treasury Bills (T-Bills) via RBI Retail Direct.";
+    if (cashVal < 5000) {
+      cashHow = "Keep in your high-yield savings account or start a Liquid Fund with instant withdrawal features.";
+    }
+    document.getElementById('b-cash-how').innerHTML = `<strong>How:</strong> ${cashHow}`;
+    
+    const skillVal = alloc.dollars["Self-Growth (Education)"];
+    let skillHow = "Subscribe to tools (ChatGPT Plus, Canva Pro) or buy premium bootcamps to grow earnings.";
+    if (skillVal < 1000) {
+      skillHow = "Buy 1-2 highly rated courses on Udemy or a foundational textbook in finance/AI.";
+    }
+    document.getElementById('b-skills-how').innerHTML = `<strong>How:</strong> ${skillHow}`;
     
     // 3. Update Copilot Reasoning
     const ai = data.ai_advice;

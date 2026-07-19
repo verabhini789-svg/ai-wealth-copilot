@@ -67,6 +67,30 @@ GADGET_DATABASE = {
         "savings_pct": 0.30,
         "savings_text": "30% (~₹15,000 - ₹30,000 savings)"
     },
+    "cpu": {
+        "name": "CPU / Processor",
+        "verdict": "WAIT",
+        "color": "var(--color-error)",
+        "reason": "Intel Arrow Lake-S and AMD Ryzen 9000 series are launching Q3 2026. Wait for launch to get better pricing on existing chips.",
+        "savings_pct": 0.15,
+        "savings_text": "15% (~₹4,000 - ₹8,000 savings)"
+    },
+    "ram": {
+        "name": "RAM / Memory",
+        "verdict": "WAIT",
+        "color": "var(--color-gold)",
+        "reason": "DDR5 Gen 2 production is scaling up, leading to a projected 20-30% price drop by October 2026. Delay if possible.",
+        "savings_pct": 0.20,
+        "savings_text": "20% (~₹1,500 - ₹3,000 savings)"
+    },
+    "phone": {
+        "name": "Smartphone",
+        "verdict": "BUY NOW",
+        "color": "var(--color-success)",
+        "reason": "Android flagship chips (Snapdragon 8 Gen 4) launch in late Q4, but current flagships (Samsung S25/OnePlus 13) are heavily discounted. Good buy now.",
+        "savings_pct": 0.0,
+        "savings_text": "Stable pricing - buy now"
+    },
     "tablet": {
         "name": "Tablet",
         "verdict": "BUY NOW",
